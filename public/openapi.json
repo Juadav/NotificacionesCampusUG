@@ -1,0 +1,77 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Notificaciones Campus Virtual UG",
+    "version": "1.0.0",
+    "description": "API de **solo lectura** sobre el Campus Virtual (Moodle) de la Universidad de Guayaquil. Lee materias y actividades (foros, tareas, lecciones, cuestionarios) con sus plazos. Un notificador aparte revisa periódicamente y avisa por email solo lo **nuevo**. Nunca sube, edita ni borra nada."
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Local" },
+    { "url": "/", "description": "Despliegue (Vercel)" }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Estado del servicio",
+        "description": "Verifica que la API responde. No toca el Campus.",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } } } }
+      }
+    },
+    "/api/estado": {
+      "get": {
+        "summary": "Estadísticas de operación",
+        "description": "Contadores locales: cuántas veces se logueó, intentos fallidos, corridas y cuántas actividades hay registradas en la base local. Sirve para auditar que no se queman logueos.",
+        "responses": { "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Estado" } } } } }
+      }
+    },
+    "/api/materias": {
+      "get": {
+        "summary": "Lista de materias matriculadas",
+        "description": "Inicia sesión (reusando cookie si existe) y devuelve las materias del estudiante.",
+        "responses": {
+          "200": { "description": "Materias", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Materia" } } } } },
+          "502": { "description": "Error contra el Campus (ej. login en cooldown)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/tareas": {
+      "get": {
+        "summary": "Actividades con sus plazos",
+        "description": "Recorre las materias y el calendario; devuelve foros, tareas, lecciones y cuestionarios con su fecha/hora límite.",
+        "responses": {
+          "200": { "description": "Actividades", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Actividad" } } } } },
+          "502": { "description": "Error contra el Campus", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/horario": {
+      "get": {
+        "summary": "Horario de clases",
+        "description": "Horario semanal fijo usado para enviar los avisos de 'INICIO DE CLASES'. No toca el Campus.",
+        "responses": { "200": { "description": "Horario", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Clase" } } } } } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Health": { "type": "object", "properties": { "ok": { "type": "boolean" }, "hora": { "type": "string", "format": "date-time" } } },
+      "Estado": { "type": "object", "properties": { "salud": { "type": "string", "enum": ["ok", "down", "desconocido"], "description": "Salud del sistema" }, "ultima_corrida": { "type": "string", "format": "date-time" }, "ultimo_error": { "type": "string", "nullable": true }, "corridas": { "type": "integer" }, "tareas": { "type": "integer", "description": "Actividades registradas en la base" } } },
+      "Materia": { "type": "object", "properties": { "id": { "type": "integer", "example": 1001 }, "nombre": { "type": "string", "example": "NOMBRE DE LA MATERIA" }, "url": { "type": "string" } } },
+      "Actividad": {
+        "type": "object",
+        "properties": {
+          "cmid": { "type": "string", "example": "1234" },
+          "tipo": { "type": "string", "enum": ["forum", "assign", "lesson", "quiz"] },
+          "tipoLabel": { "type": "string", "example": "FORO" },
+          "nombre": { "type": "string", "example": "Nombre de la actividad" },
+          "materia": { "type": "string", "example": "NOMBRE DE LA MATERIA" },
+          "url": { "type": "string" },
+          "plazo": { "type": "integer", "nullable": true, "description": "Epoch en segundos" },
+          "plazoTexto": { "type": "string", "nullable": true, "example": "domingo, 2 de noviembre de 2026, 7:07" }
+        }
+      },
+      "Clase": { "type": "object", "properties": { "materia": { "type": "string" }, "courseId": { "type": "integer" }, "profesor": { "type": "string" }, "dia": { "type": "string", "example": "lunes" }, "inicio": { "type": "string", "example": "18:00" }, "fin": { "type": "string", "example": "21:00" } } },
+      "Error": { "type": "object", "properties": { "error": { "type": "string" } } }
+    }
+  }
+}

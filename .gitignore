@@ -1,0 +1,12 @@
+node_modules/
+# Secretos: nunca subir. En CI/Vercel se usan variables de entorno.
+config.json
+.env
+# Estado local de runtime (la memoria real vive en Postgres)
+state/
+
+# previsualizaciones de email
+preview_*.html
+
+# horario (dato personal; en CI va como secret HORARIO_JSON)
+horario.json

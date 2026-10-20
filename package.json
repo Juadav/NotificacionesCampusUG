@@ -1,0 +1,18 @@
+{
+  "name": "notificaciones-campus-ug",
+  "version": "1.0.0",
+  "description": "Bot de solo lectura que notifica por email foros/tareas/lecciones nuevas del Campus Virtual UG (Moodle).",
+  "main": "src/notifier.js",
+  "scripts": {
+    "notify": "node src/notifier.js",
+    "start": "node src/server.js",
+    "check": "node --check src/ug.js && node --check src/notifier.js && node --check src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "pg": "^8.23.1"
+  }
+}

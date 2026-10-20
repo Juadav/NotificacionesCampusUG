@@ -1,0 +1,30 @@
+name: Avisar inicio de clases
+
+# Corre cada minuto para avisar ~1 min antes de cada clase.
+# Liviano: NO entra al campus (solo horario + email). La base deduplica.
+# Nota: el cron de GitHub puede atrasarse unos minutos.
+on:
+  schedule:
+    - cron: "* * * * *"      # cada minuto (requiere repo público para minutos gratis)
+  workflow_dispatch: {}
+
+concurrency:
+  group: clases
+  cancel-in-progress: false
+
+jobs:
+  avisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Avisar clases que inician
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node src/clases.js

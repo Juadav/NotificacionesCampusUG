@@ -1,0 +1,31 @@
+name: Notificar Campus UG
+
+# Revisa el Campus cada 30 min y avisa por email lo nuevo.
+# La memoria (dedup, materias, tareas) vive en Postgres (Neon), no en el repo.
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # cada 30 min (GitHub puede atrasarlo unos minutos)
+  workflow_dispatch: {}        # permite dispararlo a mano
+
+concurrency:
+  group: notificar
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - name: Ejecutar notificador
+        env:
+          UG_USER: ${{ secrets.UG_USER }}
+          UG_PASS: ${{ secrets.UG_PASS }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node src/notifier.js
