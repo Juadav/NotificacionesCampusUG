@@ -22,4 +22,5 @@ module.exports = {
   smtpPass: pick("SMTP_PASS", "smtpPass"),
   mailTo,                                                   // destinatarios de tareas/clases
   adminMail: pick("ADMIN_MAIL", "adminMail") || mailTo[0] || "", // salud -> admin (1er destinatario por defecto)
+  cronKey: pick("CRON_KEY", "cronKey") || "",               // protege /api/clases (cron externo)
 };

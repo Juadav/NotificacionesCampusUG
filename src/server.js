@@ -7,6 +7,7 @@ const path = require("path");
 const { UG } = require("./ug");
 const { getCourses, getItems } = require("./moodle");
 const { HORARIO } = require("./horario");
+const { notificarClases } = require("./notifier");
 const db = require("./db");
 const cfg = require("./config");
 
@@ -31,6 +32,13 @@ async function handle(req, res) {
     if (pathname === "/api/health") return json(res, 200, { ok: true, hora: new Date().toISOString() });
     if (pathname === "/api/estado") return json(res, 200, await db.getEstado());
     if (pathname === "/api/horario") return json(res, 200, HORARIO);
+    // Disparado por un cron externo cada minuto; protegido por ?key=CRON_KEY.
+    if (pathname === "/api/clases") {
+      const key = new URL(req.url, "http://x").searchParams.get("key");
+      if (!cfg.cronKey || key !== cfg.cronKey) return json(res, 403, { error: "no autorizado" });
+      await notificarClases();
+      return json(res, 200, { ok: true });
+    }
     if (pathname === "/api/materias") { const ug = await withUG(); return json(res, 200, await getCourses(ug)); }
     if (pathname === "/api/tareas") { const ug = await withUG(); return json(res, 200, await getItems(ug)); }
     return json(res, 404, { error: "no encontrado", docs: "/docs" });
